@@ -107,11 +107,11 @@ namespace cpp_lazyimports {
 #elif defined(__linux__) or defined(__APPLE__)
 	struct UnixLoader {
 		static std::uintptr_t load_module(const std::string& module_name) {
-		    return reinterpret_cast<std::uintptr_t>(dlopen(module_name.c_str(), RTLD_NOW));
+			return reinterpret_cast<std::uintptr_t>(dlopen(module_name.c_str(), RTLD_NOW));
 		}
 
 		static std::uintptr_t get_symbol(std::uintptr_t module_handle, const std::string& symbol_name) {
-		    return reinterpret_cast<std::uintptr_t>(dlsym(reinterpret_cast<void *>(module_handle), symbol_name.c_str()));
+			return reinterpret_cast<std::uintptr_t>(dlsym(reinterpret_cast<void *>(module_handle), symbol_name.c_str()));
 		}
 	};
 #else
@@ -178,9 +178,9 @@ namespace cpp_lazyimports {
 				std::hash<std::string> hash_fn;
 				return hash_fn(function_name) == hash_fn(import.name());
 			});
-            
+			
 			if (it != _collection.end()) {
-			    elem = *it;
+				elem = *it;
 			} else {
 				std::uintptr_t ptr = LoaderTraits::get_symbol(handle, function_name.c_str());
 				
@@ -255,7 +255,7 @@ namespace cpp_lazyimports {
 			
 			try {
 				basic_lazymodule<LoaderTraits> module;
-                find_or_load(module_name, module);
+				find_or_load(module_name, module);
 				module.add(function_name, import);
 			} catch (exceptions::lazymoduleexception& modex) {
 				throw modex;
@@ -276,12 +276,12 @@ namespace cpp_lazyimports {
 				std::hash<std::string> hash_fn;
 				return hash_fn(name) == hash_fn(module.name());
 			});
-            
+			
 			if (it != _collection.end()) {
-			    elem = *it;
-		    } else {
+				elem = *it;
+			} else {
 				std::uintptr_t hmod = LoaderTraits::load_module(name.c_str());
-                
+				
 				if (hmod == 0) {
 					std::string err = "cannot load module " + name;
 
@@ -291,7 +291,7 @@ namespace cpp_lazyimports {
 					throw exceptions::lazymoduleexception(err);
 				}
 
-                elem = _collection.emplace_back(basic_lazymodule<LoaderTraits>(name, hmod));
+				elem = _collection.emplace_back(basic_lazymodule<LoaderTraits>(name, hmod));
 			}
 		}
 

@@ -41,11 +41,7 @@ TEST_CASE("Module is loaded", "[lazymodule]") {
 	::cpp_lazyimports::lazymodulecollection::instance().register_import(Path)
 
 TEST_CASE("Module export is resolved", "[lazyimport]") {
-#if defined(_WIN64)
 	cpp_lazyimports::lazyimport imp = REGISTER_IMPORT(MODULEFUNCNOARG);
-#elif defined(__linux__) or defined(__APPLE__)
-	cpp_lazyimports::lazyimport imp = REGISTER_IMPORT(MODULEFUNCNOARG);
-#endif
 
 	SECTION("Checking import data") {
 		REQUIRE(imp.ptr() != 0);

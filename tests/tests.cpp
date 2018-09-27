@@ -81,3 +81,14 @@ TEST_CASE("Module export can be called (params)", "[lazyimport]") {
 		REQUIRE(imp.call<int>(1337, 42) == (1337 + 42));
 	}
 }
+
+TEST_CASE("Modules are loaded only once, next loads returns same reference", "[lazymodule]") {
+	cpp_lazyimports::lazymodule mod0, mod1;
+	cpp_lazyimports::lazymodulecollection::instance().find_or_load(MODULE, mod0);
+	cpp_lazyimports::lazymodulecollection::instance().find_or_load(MODULE, mod1);
+
+	SECTION("Checking refs") {
+		REQUIRE(mod0.handle() == mod1.handle());
+		REQUIRE(cpp_lazyimports::lazymodulecollection::instance().size() == 1);
+	}
+}

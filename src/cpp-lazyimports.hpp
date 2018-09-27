@@ -250,6 +250,10 @@ namespace cpp_lazyimports {
 			return instance;
 		}
 
+		std::size_t size() const {
+			return _collection.size();
+		}
+
 		lazyimport register_import(const std::string& module_name, const std::string& function_name) {
 			lazyimport import;
 			

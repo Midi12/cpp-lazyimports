@@ -124,7 +124,10 @@ namespace cpp_lazyimports {
 
 		lazyimport(const std::string& name, std::uintptr_t ptr)
 		: _name(name), _ptr(ptr)
-		{}
+		{
+			static std::hash<std::string> hashfn;
+			_hash = hashfn(name);
+		}
 
 		lazyimport(const lazyimport&) = default;
 
@@ -155,8 +158,13 @@ namespace cpp_lazyimports {
 		std::uintptr_t ptr() const {
 			return _ptr;
 		}
+		
+		std::size_t hash() const {
+			return _hash;
+		}
 	private:
 		std::string _name;
+		std::size_t _hash;
 		std::uintptr_t _ptr = 0;
 	};
 
@@ -175,8 +183,8 @@ namespace cpp_lazyimports {
 
 		void find_or_load(const std::uintptr_t& handle, const std::string& function_name, lazyimport& elem) {
 			auto it = std::find_if(_collection.begin(), _collection.end(), [&function_name](const lazyimport& import) -> bool {
-				std::hash<std::string> hash_fn;
-				return hash_fn(function_name) == hash_fn(import.name());
+				static std::hash<std::string> hash_fn;
+				return hash_fn(function_name) == import.hash();
 			});
 			
 			if (it != _collection.end()) {
@@ -197,6 +205,11 @@ namespace cpp_lazyimports {
 				elem = _collection.emplace_back(function_name, ptr);
 			}
 		}
+		
+		std::size_t size() const {
+			return _collection.size();
+		}
+
 	private:
 		std::vector<lazyimport> _collection;
 	};
@@ -208,7 +221,10 @@ namespace cpp_lazyimports {
 
 		basic_lazymodule(const std::string& name, std::uintptr_t hmod)
 		: _name(name), _handle(hmod)
-		{}
+		{
+			static std::hash<std::string> hashfn;
+			_hash = hashfn(name);
+		}
 
 		basic_lazymodule(const basic_lazymodule&) = default;
 
@@ -226,12 +242,21 @@ namespace cpp_lazyimports {
 			return _handle;
 		}
 
+		std::size_t hash() const {
+			return _hash;
+		}
+
+		basic_lazyimportcollection<LoaderTraits> imports() const {
+			return _imports;
+		}
+
 		void add(const std::string& function_name, lazyimport& import) {
 			_imports.find_or_load(_handle, function_name, import);
 		}
 	private:
 		std::string _name;
 		std::uintptr_t _handle = 0;
+		std::size_t _hash;
 		basic_lazyimportcollection<LoaderTraits> _imports;
 	};
 
@@ -277,8 +302,8 @@ namespace cpp_lazyimports {
 
 		void find_or_load(const std::string& name, basic_lazymodule<LoaderTraits>& elem) {
 			auto it = std::find_if(_collection.begin(), _collection.end(), [&name](const basic_lazymodule<LoaderTraits>& module) -> bool {
-				std::hash<std::string> hash_fn;
-				return hash_fn(name) == hash_fn(module.name());
+				static std::hash<std::string> hash_fn;
+				return hash_fn(name) == module.hash();
 			});
 			
 			if (it != _collection.end()) {

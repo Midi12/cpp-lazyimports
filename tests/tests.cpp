@@ -82,13 +82,25 @@ TEST_CASE("Module export can be called (params)", "[lazyimport]") {
 	}
 }
 
-TEST_CASE("Modules are loaded only once, next loads returns same reference", "[lazymodule]") {
+TEST_CASE("Modules and imports are loaded only once, next loads returns same reference", "[lazymodule & lazyimport]") {
 	cpp_lazyimports::lazymodule mod0, mod1;
 	cpp_lazyimports::lazymodulecollection::instance().find_or_load(MODULE, mod0);
 	cpp_lazyimports::lazymodulecollection::instance().find_or_load(MODULE, mod1);
 
-	SECTION("Checking refs") {
+	SECTION("Checking modules refs & hashes") {
 		REQUIRE(mod0.handle() == mod1.handle());
+		REQUIRE(mod0.hash() == mod1.hash());
 		REQUIRE(cpp_lazyimports::lazymodulecollection::instance().size() == 1);
+	}
+	
+	cpp_lazyimports::lazyimport imp0, imp1;
+	mod0.add(FUNC, imp0);
+	mod1.add(FUNC, imp1);
+	
+	SECTION("Checking imports refs & hashes") {
+		REQUIRE(imp0.ptr() == imp1.ptr());
+		REQUIRE(imp0.hash() == imp1.hash());
+		REQUIRE(mod0.imports().size() == 1);
+		REQUIRE(mod1.imports().size() == 1);
 	}
 }

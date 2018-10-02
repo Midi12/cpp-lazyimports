@@ -27,8 +27,6 @@ namespace cpp_lazyimports {
 	#define GETLASTERROR GetLastError()
 #elif defined(__linux__) or defined(__APPLE__)
 	#define GETLASTERROR errno
-#else
-	#error platform not supported
 #endif
 
 		class lazyimportexception : public std::exception {
@@ -114,8 +112,6 @@ namespace cpp_lazyimports {
 			return reinterpret_cast<std::uintptr_t>(dlsym(reinterpret_cast<void *>(module_handle), symbol_name.c_str()));
 		}
 	};
-#else
-	#error platform not supported
 #endif
 
 	class lazyimport {

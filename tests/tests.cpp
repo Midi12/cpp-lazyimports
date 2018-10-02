@@ -104,3 +104,19 @@ TEST_CASE("Modules and imports are loaded only once, next loads returns same ref
 		REQUIRE(mod1.imports().size() == 1);
 	}
 }
+
+TEST_CASE("Modules can be unloaded", "[lazymodule]") {
+	// ensure the test module is loaded
+	if (cpp_lazyimports::lazymodulecollection::instance().size() < 1) {
+		cpp_lazyimports::lazymodule mod0;
+		cpp_lazyimports::lazymodulecollection::instance().find_or_load(MODULE, mod0);
+	}
+	
+	REQUIRE(cpp_lazyimports::lazymodulecollection::instance().size() == 1);
+	
+	SECTION("Unloading module") {
+		LAZYUNLOAD(MODULE);
+		
+		REQUIRE(cpp_lazyimports::lazymodulecollection::instance().size() == 0);
+	}
+}

@@ -98,8 +98,12 @@ namespace cpp_lazyimports {
 			return reinterpret_cast<std::uintptr_t>(LoadLibraryA(module_name.c_str()));
 		}
 
-		static std::uintptr_t get_symbol(std::uintptr_t module_handle, const std::string& symbol_name) {
+		static std::uintptr_t get_symbol(const std::uintptr_t module_handle, const std::string& symbol_name) {
 			return reinterpret_cast<std::uintptr_t>(GetProcAddress(reinterpret_cast<HMODULE>(module_handle), symbol_name.c_str()));
+		}
+		
+		static std::uint32_t free_module(const std::uintptr_t module_handle) {
+			return FreeLibrary(reinterpret_cast<HMODULE>(module_handle));
 		}
 	};
 #elif defined(__linux__) or defined(__APPLE__)
@@ -108,8 +112,12 @@ namespace cpp_lazyimports {
 			return reinterpret_cast<std::uintptr_t>(dlopen(module_name.c_str(), RTLD_NOW));
 		}
 
-		static std::uintptr_t get_symbol(std::uintptr_t module_handle, const std::string& symbol_name) {
+		static std::uintptr_t get_symbol(const std::uintptr_t module_handle, const std::string& symbol_name) {
 			return reinterpret_cast<std::uintptr_t>(dlsym(reinterpret_cast<void *>(module_handle), symbol_name.c_str()));
+		}
+		
+		static std::uint32_t free_module(const std::uintptr_t module_handle) {
+			return dlclose(reinterpret_cast<void *>(module_handle));
 		}
 	};
 #endif
@@ -230,6 +238,10 @@ namespace cpp_lazyimports {
 
 		~basic_lazymodule() = default;
 
+		std::uint32_t unload() {
+			return LoaderTraits::free_module(_handle);
+		}
+
 		std::string name() const {
 			return _name;
 		}
@@ -260,7 +272,13 @@ namespace cpp_lazyimports {
 	class basic_lazymodulecollection {
 	private:
 		basic_lazymodulecollection() = default;
-		~basic_lazymodulecollection() = default;
+		
+		~basic_lazymodulecollection() {
+			for (auto& mod : _collection) {
+				mod.unload();
+			}
+		};
+		
 		basic_lazymodulecollection(const basic_lazymodulecollection&) = delete;
 		basic_lazymodulecollection& operator= (const basic_lazymodulecollection&) = delete;
 		basic_lazymodulecollection(basic_lazymodulecollection&&) noexcept = default;
@@ -320,6 +338,19 @@ namespace cpp_lazyimports {
 			}
 		}
 
+		void unload(const std::string& name) {
+			auto it = std::find_if(_collection.begin(), _collection.end(), [&name](const basic_lazymodule<LoaderTraits>& module) -> bool {
+				static std::hash<std::string> hash_fn;
+				return hash_fn(name) == module.hash();
+			});
+			
+			if (it != _collection.end()) {
+				basic_lazymodule<LoaderTraits> mod = *it;
+				mod.unload();
+				_collection.erase(it);
+			}
+		}
+
 	private:
 		using modulecollection = std::vector<basic_lazymodule<LoaderTraits>>;
 		modulecollection _collection;
@@ -345,3 +376,6 @@ namespace cpp_lazyimports {
 
 #define LAZYLOAD(path) \
 	::cpp_lazyimports::lazymodulecollection::instance().register_import(path)
+
+#define LAZYUNLOAD(path) \
+	::cpp_lazyimports::lazymodulecollection::instance().unload(path)
